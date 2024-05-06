@@ -1,0 +1,24 @@
+2024-04-08 10:13:52,325 mapdamage.main INFO Started with the command: /global/home/users/jieruixu/.local/bin/mapDamage --merge-libraries -i mapping/stripped_simulation_s_L30MQ25.bam -r /global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa -d mapdamage_result/stripped_simulation_s
+2024-04-08 10:13:52,337 mapdamage.reader INFO Found 1 libraries in BAM file
+2024-04-08 10:13:52,341 mapdamage.main INFO Reading from 'mapping/stripped_simulation_s_L30MQ25.bam'
+2024-04-08 10:13:52,342 mapdamage.main INFO Writing results to 'mapdamage_result/stripped_simulation_s/'
+2024-04-08 10:14:39,267 mapdamage.rscript INFO Saving misincorporation plot to '/global/scratch/users/jieruixu/sediment_dna/sedimix/pipeline/SIM_Set3_centrifuge/mapdamage_result/stripped_simulation_s/Fragmisincorporation_plot.pdf'
+2024-04-08 10:14:39,887 mapdamage.rscript INFO Saving length distribution plot to '/global/scratch/users/jieruixu/sediment_dna/sedimix/pipeline/SIM_Set3_centrifuge/mapdamage_result/stripped_simulation_s/Length_plot.pdf'
+2024-04-08 10:14:44,940 mapdamage.rscript INFO Performing Bayesian estimates
+2024-04-08 10:14:46,330 mapdamage.rscript INFO Compiling C++ extension. This may take a moment ..
+2024-04-08 10:14:56,129 mapdamage.rscript INFO Compilation of C++ extension completed
+2024-04-08 10:14:56,507 mapdamage.rscript INFO Starting grid search, starting from random values
+2024-04-08 10:15:10,278 mapdamage.rscript INFO Adjusting the proposal variance iteration  1
+2024-04-08 10:15:34,771 mapdamage.rscript INFO Adjusting the proposal variance iteration  2
+2024-04-08 10:15:58,923 mapdamage.rscript INFO Adjusting the proposal variance iteration  3
+2024-04-08 10:16:22,998 mapdamage.rscript INFO Adjusting the proposal variance iteration  4
+2024-04-08 10:16:47,082 mapdamage.rscript INFO Adjusting the proposal variance iteration  5
+2024-04-08 10:17:11,119 mapdamage.rscript INFO Adjusting the proposal variance iteration  6
+2024-04-08 10:17:35,139 mapdamage.rscript INFO Adjusting the proposal variance iteration  7
+2024-04-08 10:17:59,265 mapdamage.rscript INFO Adjusting the proposal variance iteration  8
+2024-04-08 10:18:23,433 mapdamage.rscript INFO Adjusting the proposal variance iteration  9
+2024-04-08 10:18:47,683 mapdamage.rscript INFO Adjusting the proposal variance iteration  10
+2024-04-08 10:19:11,954 mapdamage.rscript INFO Done burning, starting the iterations
+2024-04-08 10:21:13,276 mapdamage.rscript INFO Done with the iterations, finishing up
+2024-04-08 10:21:13,277 mapdamage.rscript INFO Writing and plotting to files
+2024-04-08 10:21:55,958 mapdamage.main INFO Successful run

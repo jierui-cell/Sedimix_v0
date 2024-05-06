@@ -1,0 +1,38 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 1 (use --cores to define parallelism)
+Rules claiming more threads will be scaled down.
+Job stats:
+job             count
+------------  -------
+all                 1
+final_report        1
+total               2
+
+Select jobs to execute...
+
+[Mon Apr  8 13:03:37 2024]
+rule final_report:
+    input: mapping/stripped_simulation_s.bam, mapping/stripped_simulation_s_L30MQ25.bam, mapping/stripped_simulation_s_classified_homo_sapiens.bam
+    output: final_report/final_report_stripped_simulation_s.csv
+    jobid: 9
+    reason: Missing output files: final_report/final_report_stripped_simulation_s.csv
+    wildcards: sample=stripped_simulation_s
+    resources: tmpdir=/tmp
+
+[Mon Apr  8 13:04:09 2024]
+Finished job 9.
+1 of 2 steps (50%) done
+Select jobs to execute...
+
+[Mon Apr  8 13:04:09 2024]
+localrule all:
+    input: final_reads/stripped_simulation_s_classified_homo_sapiens.fq, final_reads/stripped_simulation_s_reads.lst, mapdamage_result/stripped_simulation_s, mapdamage_result_after_classification/stripped_simulation_s, final_report/final_report_stripped_simulation_s.csv
+    jobid: 0
+    reason: Input files updated by another job: final_report/final_report_stripped_simulation_s.csv
+    resources: tmpdir=/tmp
+
+[Mon Apr  8 13:04:09 2024]
+Finished job 0.
+2 of 2 steps (100%) done
+Complete log: .snakemake/log/2024-04-08T130337.202639.snakemake.log

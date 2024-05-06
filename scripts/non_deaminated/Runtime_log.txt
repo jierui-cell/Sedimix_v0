@@ -1,0 +1,31 @@
+2024-04-14 22:13:16,212 mapdamage.main INFO Started with the command: /global/home/users/jieruixu/.local/bin/mapDamage --merge-libraries --no-stats -l 200 -y 1 -i test_non_deaminated.bam -r ../../reference_data/human/hg19.fa -d non_deaminated
+2024-04-14 22:13:16,217 mapdamage.reader INFO Found 1 libraries in BAM file
+2024-04-14 22:13:16,219 mapdamage.main INFO Reading from 'test_non_deaminated.bam'
+2024-04-14 22:13:16,220 mapdamage.main INFO Writing results to 'non_deaminated/'
+2024-04-14 22:14:04,146 mapdamage.rscript INFO Saving misincorporation plot to '/global/scratch/users/jieruixu/sediment_dna/sedimix/pipeline/scripts/non_deaminated/Fragmisincorporation_plot.pdf'
+2024-04-14 22:14:04,550 mapdamage.rscript INFO Saving length distribution plot to '/global/scratch/users/jieruixu/sediment_dna/sedimix/pipeline/scripts/non_deaminated/Length_plot.pdf'
+2024-04-14 22:14:04,878 mapdamage.main INFO Successful run
+2024-04-14 22:20:19,958 mapdamage.main INFO Started with the command: /global/home/users/jieruixu/.local/bin/mapDamage --merge-libraries -l 200 -y 1 -i test_non_deaminated.bam -r ../../reference_data/human/hg19.fa -d non_deaminated
+2024-04-14 22:20:19,964 mapdamage.reader INFO Found 1 libraries in BAM file
+2024-04-14 22:20:19,967 mapdamage.main INFO Reading from 'test_non_deaminated.bam'
+2024-04-14 22:20:19,967 mapdamage.main INFO Writing results to 'non_deaminated/'
+2024-04-14 22:21:01,680 mapdamage.rscript INFO Saving misincorporation plot to '/global/scratch/users/jieruixu/sediment_dna/sedimix/pipeline/scripts/non_deaminated/Fragmisincorporation_plot.pdf'
+2024-04-14 22:21:02,064 mapdamage.rscript INFO Saving length distribution plot to '/global/scratch/users/jieruixu/sediment_dna/sedimix/pipeline/scripts/non_deaminated/Length_plot.pdf'
+2024-04-14 22:21:08,167 mapdamage.rscript INFO Performing Bayesian estimates
+2024-04-14 22:21:08,917 mapdamage.rscript INFO Compiling C++ extension. This may take a moment ..
+2024-04-14 22:21:13,507 mapdamage.rscript INFO Compilation of C++ extension completed
+2024-04-14 22:21:13,584 mapdamage.rscript INFO Starting grid search, starting from random values
+2024-04-14 22:21:25,263 mapdamage.rscript INFO Adjusting the proposal variance iteration  1
+2024-04-14 22:21:50,058 mapdamage.rscript INFO Adjusting the proposal variance iteration  2
+2024-04-14 22:22:14,703 mapdamage.rscript INFO Adjusting the proposal variance iteration  3
+2024-04-14 22:22:39,305 mapdamage.rscript INFO Adjusting the proposal variance iteration  4
+2024-04-14 22:23:03,886 mapdamage.rscript INFO Adjusting the proposal variance iteration  5
+2024-04-14 22:23:28,468 mapdamage.rscript INFO Adjusting the proposal variance iteration  6
+2024-04-14 22:23:53,075 mapdamage.rscript INFO Adjusting the proposal variance iteration  7
+2024-04-14 22:24:17,752 mapdamage.rscript INFO Adjusting the proposal variance iteration  8
+2024-04-14 22:24:42,525 mapdamage.rscript INFO Adjusting the proposal variance iteration  9
+2024-04-14 22:25:07,310 mapdamage.rscript INFO Adjusting the proposal variance iteration  10
+2024-04-14 22:25:32,067 mapdamage.rscript INFO Done burning, starting the iterations
+2024-04-14 22:27:35,755 mapdamage.rscript INFO Done with the iterations, finishing up
+2024-04-14 22:27:35,756 mapdamage.rscript INFO Writing and plotting to files
+2024-04-14 22:28:18,506 mapdamage.main INFO Successful run

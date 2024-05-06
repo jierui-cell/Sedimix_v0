@@ -1,0 +1,2 @@
+total_reads,average_read_length,total_reads_after_map_qc,average_read_length_after_map_qc,final_reads,final_average_read_length
+10000000,43.2144,799996,47.0543,784147,47.4804

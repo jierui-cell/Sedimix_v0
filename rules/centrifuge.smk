@@ -1,0 +1,215 @@
+# write the default snakemake workflow 
+# mapping first strategy 
+
+# put all the files in data   
+
+## ------ 
+## Small functions to use 
+## ------ 
+import glob
+import os 
+
+# List all .fq and .fq.gz files in the data folder
+input_files = glob.glob("data/*.fq") + glob.glob("data/*.fq.gz")        
+
+## ------
+## Snakemake workflow 
+## ------
+
+# define the final output files
+# define the final output files
+rule all:
+    input:
+        expand([
+            "final_reads/{sample}_classified_homo_sapiens.fq", 
+            "final_reads/{sample}_reads.lst",
+            "mapdamage_result/{sample}",  
+            "mapdamage_result_after_classification/{sample}", 
+            "final_report/final_report_{sample}.csv"
+        ], sample=[os.path.basename(f).split('.fq')[0] for f in input_files])
+
+# Compress all fastq files if not done before
+rule gzip_fq_files:
+    input:
+        lambda wildcards: "data/" + wildcards.filename if not wildcards.filename.endswith('.gz') else "data/" + wildcards.filename[:-3]
+    output:
+        "data/{filename}.fq.gz"
+    benchmark:
+        "benchmarks/gzip/{filename}.txt"
+    shell:
+        """
+        gzip -c {input} > {output}
+        """
+
+# Map reads using bwa to the hg19 genome, convert to BAM, sort, and index
+rule map_sort_index:
+    input:
+        "data/{sample}.fq.gz"
+    output:
+        bam="mapping/{sample}.bam",
+        bam_bai="mapping/{sample}.bam.bai",
+        sai="temp/{sample}.sai",
+        sam="temp/{sample}.sam"
+    params:
+        ref_genome="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa",
+        threads=8
+    benchmark:
+        "benchmarks/map_sort_index/{sample}.txt"
+    shell:
+        """
+        bwa aln {params.ref_genome} -t {params.threads} -n 0.01 -o 2 -l 16500 {input} > {output.sai}
+        bwa samse {params.ref_genome} {output.sai} {input} > {output.sam}
+        samtools view -h -b {output.sam} | samtools sort -T {wildcards.sample} -o {output.bam}
+        samtools index {output.bam}
+        """
+
+# Filter mapped reads with sequence length of at least 30 and mapping quality of at least 25
+rule mapping_quality_filter:
+    input:
+        "mapping/{sample}.bam"
+    output:
+        "mapping/{sample}_L30MQ25.bam"
+    benchmark:
+        "benchmarks/mapping_quality_filter/{sample}.txt"
+    shell:
+        """
+        samtools view -h -q 25 {input} |
+        awk 'length($10) > 29 || $1 ~ /^@/' |
+        samtools view -bS - > {output}
+        """
+
+# Detour: add statistical analysis for ancient DNA damage
+rule run_mapdamage:
+    input:
+        sam_file="mapping/{sample}_L30MQ25.bam",
+        ref_file="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa"
+    output:
+        directory("mapdamage_result/{sample}")
+    benchmark:
+        "benchmarks/mapdamage/{sample}.txt"
+    shell:
+        """
+        mapDamage --merge-libraries -i {input.sam_file} -r {input.ref_file} -d {output}
+        """
+
+# Convert BAM to fastq
+rule bam_to_fastq:
+    input:
+        "mapping/{sample}_L30MQ25.bam"
+    output:
+        "mapping/{sample}_L30MQ25.fq"
+    benchmark:
+        "benchmarks/bam_to_fastq/{sample}.txt"
+    shell:
+        """
+        samtools fastq {input} > {output}
+        """
+
+# Classification
+rule classification:
+    input:
+        "mapping/{sample}_L30MQ25.fq"
+    output: 
+        "classification/{sample}_L30MQ25.centrifuge",
+        "classification/{sample}_L30MQ25.centrifugeLog",
+        "classification/{sample}_L30MQ25.k2report"
+    params:
+        # TOOD: change this to NCBI-nt if needed 
+        centrifuge_db="p+h+v" # 7.9 GB 
+    benchmark:
+        "benchmarks/classification/{sample}.txt"
+    shell:
+        # TODO: change this in the future to directly run centrifuge command instead of calling a .py file 
+        # TODO: add support for multithread (-p) and for memory mapping (-mm)
+        """
+        python ../scripts/centrifuge_classification.py centrifuge {input} {params.centrifuge_db} {wildcards.sample}_L30MQ25
+        mv {wildcards.sample}_L30MQ25.centrifuge {wildcards.sample}_L30MQ25.centrifugeLog {wildcards.sample}_L30MQ25.k2report classification
+        """
+
+# Generate classified reads
+rule generate_classified_reads:
+    input:
+        centrifuge_result="classification/{sample}_L30MQ25.centrifuge",
+        fq="mapping/{sample}_L30MQ25.fq"
+    output:
+        fq="final_reads/{sample}_classified_homo_sapiens.fq",
+        lst="final_reads/{sample}_reads.lst"
+    params:
+        taxID=9606  # Homo sapiens
+    benchmark:
+        "benchmarks/generate_classified_reads/{sample}.txt"
+    shell:
+        """
+        python ../scripts/select_reads_from_centrifuge.py {params.taxID} {input.centrifuge_result} {wildcards.sample}
+        mv {wildcards.sample}_reads.lst final_reads/
+        /global/home/users/jieruixu/jieruixu/sediment_dna/seqtk/seqtk subseq {input.fq} {output.lst} > {output.fq}
+        """
+
+# Map again, and run mapDamage
+rule map_after_classification:
+    input:
+        "final_reads/{sample}_classified_homo_sapiens.fq"
+    output:
+        bam="mapping/{sample}_classified_homo_sapiens.bam",
+        bam_bai="mapping/{sample}_classified_homo_sapiens.bam.bai",
+        sai="temp/{sample}_classified_homo_sapiens.sai",
+        sam="temp/{sample}_classified_homo_sapiens.sam"
+    params:
+        ref_genome="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa",
+        threads=8
+    benchmark:
+        "benchmarks/map_after_classification/{sample}.txt"
+    shell:
+        """
+        bwa aln {params.ref_genome} -t {params.threads} {input} > {output.sai}
+        bwa samse {params.ref_genome} {output.sai} {input} > {output.sam}
+        samtools view -h -b {output.sam} | samtools sort -T {wildcards.sample} -o {output.bam}
+        samtools index {output.bam}
+        """
+
+# Run mapDamage after classification
+rule run_mapdamage_after_classification:
+    input:
+        sam_file="mapping/{sample}_classified_homo_sapiens.bam",
+        ref_file="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa"
+    output:
+        directory("mapdamage_result_after_classification/{sample}")
+    benchmark:
+        "benchmarks/run_mapdamage_after_classification/{sample}.txt"
+    shell:
+        """
+        mapDamage --merge-libraries -i {input.sam_file} -r {input.ref_file} -d {output}
+        """
+
+rule final_report:
+    input:
+        # pre_map="data/{sample}.fq.gz",
+        post_map="mapping/{sample}.bam",
+        post_map_qc="mapping/{sample}_L30MQ25.bam",
+        post_map_qc_classi="mapping/{sample}_classified_homo_sapiens.bam"
+    output:
+        "final_report/final_report_{sample}.csv"
+    shell:
+        """
+        # Calculate average read length for post-mapping BAM
+        avg_read_length_post_map=$(samtools view {input.post_map} | cut -f 10 | perl -ne 'chomp;print length($_) . "\n"' | awk '{{ sum += $1; n++ }} END {{ if (n > 0) print sum / n; else print "0" }}')
+
+        # Calculate total reads for post-mapping BAM
+        total_reads_post_map=$(samtools view -c {input.post_map})
+
+        # Calculate average read length for post-mapping BAM with QC
+        avg_read_length_post_map_qc=$(samtools view {input.post_map_qc} | cut -f 10 | perl -ne 'chomp;print length($_) . "\n"' | awk '{{ sum += $1; n++ }} END {{ if (n > 0) print sum / n; else print "0" }}')
+
+        # Calculate total reads for post-mapping BAM with QC
+        total_reads_post_map_qc=$(samtools view -c {input.post_map_qc})
+
+        # Calculate average read length for final reads
+        avg_read_length_final=$(samtools view {input.post_map_qc_classi} | cut -f 10 | perl -ne 'chomp;print length($_) . "\n"' | awk '{{ sum += $1; n++ }} END {{ if (n > 0) print sum / n; else print "0" }}')
+
+        # Calculate total reads for final reads
+        total_reads_final=$(samtools view -c {input.post_map_qc_classi})
+
+        # Output the final report CSV
+        echo "total_reads,average_read_length,total_reads_after_map_qc,average_read_length_after_map_qc,final_reads,final_average_read_length" > {output}
+        echo "$total_reads_post_map,$avg_read_length_post_map,$total_reads_post_map_qc,$avg_read_length_post_map_qc,$total_reads_final,$avg_read_length_final" >> {output}
+        """
