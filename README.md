@@ -44,4 +44,4 @@ Alternatively, you can build these indexes yourself by following the instruction
 ## Retrieve Your Results
 - **Classified Reads**: Located in the `final_reads` folder
 - **Data Summary Report**: Located in the `final_report` folder
-- **Example Folde**r: An example folder can be found in SIM_Set3_centrifuge. 
+- **Example Folde**r: An example folder can be found in `SIM_Set3_centrifuge`. 
