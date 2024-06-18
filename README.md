@@ -18,28 +18,32 @@ Ensure the following tools are installed and configured before running the pipel
 ```bash
 git clone https://github.com/DaehwanKimLab/centrifuge
 make -C centrifuge
-export PATH=$PATH:$(pwd)/centrifuge
+echo 'export PATH=$PATH:$(pwd)/centrifuge' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ### Kraken2
 ```bash
 git clone https://github.com/DerrickWood/kraken2.git
 ./kraken2/install_kraken2.sh kraken2
-export PATH=$PATH:$(pwd)/kraken2
+echo 'export PATH=$PATH:$(pwd)/kraken2' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ### Seqtk
 ```bash
 git clone https://github.com/lh3/seqtk.git
 make -C seqtk
-export PATH=$PATH:$(pwd)/seqtk
+echo 'export PATH=$PATH:$(pwd)/seqtk' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ### BWA
 ```bash
 git clone https://github.com/lh3/bwa.git
 make -C bwa
-export PATH=$PATH:$(pwd)/bwa
+echo 'export PATH=$PATH:$(pwd)/bwa' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ### Samtools
@@ -49,10 +53,11 @@ tar -xvjf samtools-1.20.tar.bz2
 rm samtools-1.20.tar.bz2
 ./samtools-1.20/configure
 make -C samtools-1.20
-export PATH=$PATH:$(pwd)/samtools-1.20
+echo 'export PATH=$PATH:$(pwd)/samtools-1.20' >> ~/.bashrc
+source ~/.bashrc
 ```
 
-Add these tools to your `PATH` environment variable permanently by adding the `export PATH` commands to your shell profile file (e.g., `.bashrc` or `.zshrc`).
+If you're using `zsh` as your shell, replace `~/.bashrc` with `~/.zshrc` in the commands above.
 
 **Index Files**  
 Download index files for Centrifuge and Kraken2 from the following:
