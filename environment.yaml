@@ -1,0 +1,17 @@
+name: sedimix
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11.4
+  - snakemake
+  - samtools
+  - gsl
+  - bwa
+  - r-base=4.3.2 # only useful if we need mapDamage, which we would need extra r packages downloads  
+  - numpy
+  - pandas
+  - tqdm
+  - pyfaidx
+  - biopython
+  - pysam
