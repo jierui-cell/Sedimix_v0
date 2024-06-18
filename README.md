@@ -18,12 +18,15 @@ Ensure the following tools are installed and configured before running the pipel
 - **Seqtk**: [lh3/seqtk](https://github.com/lh3/seqtk)
 - **BWA**: A fast, accurate read mapping software ([Download BWA](https://github.com/lh3/bwa))
 - **Samtools**: Utilities for manipulating alignments in the SAM/BAM format ([Download Samtools](http://www.htslib.org/download/))
-- **GSL (GNU Scientific Library)**: [GSL](https://www.gnu.org/software/gsl/)
 
 **Index Files**  
 Download index files for Centrifuge and Kraken2 from the following:
 - [AWS Indexes for Centrifuge](https://benlangmead.github.io/aws-indexes/centrifuge)
 - [AWS Indexes for Kraken2](https://benlangmead.github.io/aws-indexes/k2)
+
+**Human Reference Genome**  
+Download the human reference genome hg19.fq.gz from the following:  
+- [UCSC Genome Browser hg19](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/latest/)
 
 Alternatively, you can build these indexes yourself by following the instructions provided on their respective GitHub repositories.
 
@@ -61,7 +64,7 @@ conda activate sedimix
 2. Run the pipeline with the following command:
 
    ```bash
-   snakemake -s rules/centrifuge.smk --cores {n_cores} 
+   snakemake -s ../rules/centrifuge.smk --cores {n_cores} 
    ```
 ## Retrieve Your Results
 - **Classified Reads**: Located in the `final_reads` folder
