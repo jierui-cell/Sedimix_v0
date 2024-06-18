@@ -19,6 +19,45 @@ Ensure the following tools are installed and configured before running the pipel
 - **BWA**: A fast, accurate read mapping software ([Download BWA](https://github.com/lh3/bwa))
 - **Samtools**: Utilities for manipulating alignments in the SAM/BAM format ([Download Samtools](http://www.htslib.org/download/))
 
+**Centrifuge Download** 
+```bash
+git clone https://github.com/DaehwanKimLab/centrifuge
+cd centrifuge
+make
+sudo make install prefix=/usr/local
+```
+
+**Kraken2 Download**
+```bash
+git clone https://github.com/DerrickWood/kraken2.git
+cd kraken2
+./install_kraken2.sh .
+```
+
+**Seqtk Download**
+```bash
+git clone https://github.com/lh3/seqtk.git;
+cd seqtk; make
+```
+
+**BWA Download**
+```bash
+git clone https://github.com/lh3/bwa.git
+cd bwa; make
+```
+
+**Samtools Download**
+```bash
+wget https://github.com/samtools/samtools/releases/download/1.20/samtools-1.20.tar.bz2 
+tar -xvjf samtools-1.20.tar.bz2
+rm samtools-1.20.tar.bz2
+cd samtools-1.20
+make
+make install 
+```
+
+Add those tools to your PATH environment variable.
+
 **Index Files**  
 Download index files for Centrifuge and Kraken2 from the following:
 - [AWS Indexes for Centrifuge](https://benlangmead.github.io/aws-indexes/centrifuge)
