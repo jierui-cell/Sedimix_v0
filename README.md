@@ -61,14 +61,26 @@ If you're using `zsh` as your shell, replace `~/.bashrc` with `~/.zshrc` in the 
 
 **Index Files**  
 Download index files for Centrifuge and Kraken2 from the following:
-- [AWS Indexes for Centrifuge](https://benlangmead.github.io/aws-indexes/centrifuge)
-- [AWS Indexes for Kraken2](https://benlangmead.github.io/aws-indexes/k2)
+- [AWS Indexes for Centrifuge](https://benlangmead.github.io/aws-indexes/centrifuge)  
+  We recommend Refseq: bacteria, archaea, viral, human (7.9GB) for Centrifuge.  
+  ```bash
+  wget https://genome-idx.s3.amazonaws.com/centrifuge/p%2Bh%2Bv.tar.gz
+  ```
+
+- [AWS Indexes for Kraken2](https://benlangmead.github.io/aws-indexes/k2)  
+  We recommend Refseq: archaea, bacteria, viral, plasmid, human1, UniVec_Core (60GB) for Kraken2.  
+  ```bash
+  wget https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20240605.tar.gz
+  ```
+
+Alternatively, you can build Centrifuge and Kraken2 indexes yourself by following the instructions provided on their respective GitHub repositories.
 
 **Human Reference Genome**  
 Download the human reference genome hg19.fq.gz from the following:  
-- [UCSC Genome Browser hg19](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/latest/)
-
-Alternatively, you can build these indexes yourself by following the instructions provided on their respective GitHub repositories.
+- [UCSC Genome Browser hg19](https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/latest/)  
+  ```bash
+  wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/latest/hg19.fa.gz
+  ```
 
 ## Python and Other Dependencies
 To ensure all necessary dependencies are installed, create a conda environment using the provided `environment.yaml` file.
