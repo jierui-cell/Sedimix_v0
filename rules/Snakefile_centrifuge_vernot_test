@@ -1,0 +1,302 @@
+# write the default snakemake workflow 
+# mapping first strategy 
+
+# put all the files in data   
+
+## ------ 
+## Small functions to use 
+## ------ 
+import glob
+import os 
+
+# List all .fq and .fq.gz files in the data folder
+input_files = glob.glob("data/*.fq") + glob.glob("data/*.fq.gz")        
+
+## ------
+## Snakemake workflow 
+## ------
+
+# define the final output files
+# define the final output files
+rule all:
+    input:
+        expand([
+            "final_reads/{sample}_classified_homo_sapiens.fq", 
+            "final_reads/{sample}_reads.lst",
+            "final_reads/{sample}_classified_homo_sapiens_deaminated.bam", 
+            "final_reads/{sample}_classified_homo_sapiens_non_deaminated.bam", 
+            # "mapdamage_result/{sample}",  
+            "mapdamage_result_after_classification/{sample}", 
+            "final_report/final_report_{sample}.tsv"
+        ], sample=[os.path.basename(f).split('.fq')[0] for f in input_files])
+
+# Compress all fastq files if not done before
+rule gzip_fq_files:
+    input:
+        lambda wildcards: "data/" + wildcards.filename if not wildcards.filename.endswith('.gz') else "data/" + wildcards.filename[:-3]
+    output:
+        "data/{filename}.gz"
+    benchmark:
+        "benchmarks/gzip/{filename}.txt"
+    shell:
+        """
+        gzip -c {input} > {output}
+        """
+
+# Map reads using bwa to the hg19 genome, convert to BAM, sort, and index
+rule map_sort_index:
+    input:
+        "data/{sample}.fq.gz"
+    output:
+        bam="mapping/{sample}.bam",
+        bam_bai="mapping/{sample}.bam.bai",
+        sai="temp/{sample}.sai",
+        sam="temp/{sample}.sam"
+    params:
+        ref_genome="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa",
+        threads=16
+    benchmark:
+        "benchmarks/map_sort_index/{sample}.txt"
+    # TODO: delete this later on 
+    # shell:
+    #     """
+    #     bwa aln {params.ref_genome} -t {params.threads} -n 0.01 -o 2 -l 16500 {input} > {output.sai}
+    #     bwa samse {params.ref_genome} {output.sai} {input} > {output.sam}
+    #     samtools view -h -b {output.sam} | samtools sort -T {wildcards.sample} -o {output.bam}
+    #     samtools index {output.bam}
+    #     """
+
+    # TODO: why -l 16500, why not -l 1024 -n 0.01 -o 2 
+    shell:
+        """
+        bwa aln {params.ref_genome} -t {params.threads} -n 0.01 -o 2 -l 16500 {input} > {output.sai}
+        bwa samse {params.ref_genome} {output.sai} {input} > {output.sam}
+        samtools view -@ {params.threads} -h -b {output.sam} | samtools sort -@ {params.threads} -T temp/{wildcards.sample} -o {output.bam}
+        samtools index {output.bam}
+        """
+
+# Filter mapped reads with sequence length of at least 30 and mapping quality of at least 25
+rule mapping_quality_filter:
+    input:
+        "mapping/{sample}.bam"
+    output:
+        "mapping/{sample}_L30MQ25.bam"
+    benchmark:
+        "benchmarks/mapping_quality_filter/{sample}.txt"
+    shell:
+        """
+        samtools view -h -q 25 {input} |
+        awk 'length($10) > 29 || $1 ~ /^@/' |
+        samtools view -bS - > {output}
+        """
+
+# Mark duplicates
+rule mark_duplicates:
+    input:
+        "mapping/{sample}_L30MQ25.bam"
+    output:
+        "mapping/{sample}_L30MQ25_dedup.bam"
+    benchmark:
+        "benchmarks/mark_duplicates/{sample}.txt"
+    shell:
+        """
+        samtools sort -o mapping/{wildcards.sample}_L30MQ25_sorted.bam {input}
+        samtools markdup -r mapping/{wildcards.sample}_L30MQ25_sorted.bam {output}
+        rm mapping/{wildcards.sample}_L30MQ25_sorted.bam 
+        """
+
+# # Detour: add statistical analysis for ancient DNA damage
+# rule run_mapdamage:
+#     input:
+#         sam_file="mapping/{sample}_L30MQ25_dedup.bam",
+#         ref_file="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa"
+#     output:
+#         directory("mapdamage_result/{sample}")
+#     benchmark:
+#         "benchmarks/mapdamage/{sample}.txt"
+#     shell:
+#         """
+#         mapDamage --merge-libraries -i {input.sam_file} -r {input.ref_file} -d {output}
+#         """
+
+# Convert BAM to fastq
+rule bam_to_fastq:
+    input:
+        "mapping/{sample}_L30MQ25_dedup.bam"
+    output:
+        "mapping/{sample}_L30MQ25_dedup.fq"
+    benchmark:
+        "benchmarks/bam_to_fastq/{sample}.txt"
+    shell:
+        """
+        samtools fastq {input} > {output}
+        """
+
+# Classification
+rule classification:
+    input:
+        "mapping/{sample}_L30MQ25_dedup.fq"
+    output: 
+        "classification/{sample}_L30MQ25.centrifuge",
+        "classification/{sample}_L30MQ25.centrifugeLog",
+        "classification/{sample}_L30MQ25.k2report"
+    params:
+        # TOOD: change this to NCBI-nt if needed 
+        centrifuge_db="p+h+v" # 7.9 GB 
+    benchmark:
+        "benchmarks/classification/{sample}.txt"
+    shell:
+        # TODO: change this in the future to directly run centrifuge command instead of calling a .py file 
+        # TODO: add support for multithread (-p) and for memory mapping (-mm)
+        """
+        python ../scripts/centrifuge_classification.py centrifuge {input} {params.centrifuge_db} {wildcards.sample}_L30MQ25
+        mv {wildcards.sample}_L30MQ25.centrifuge {wildcards.sample}_L30MQ25.centrifugeLog {wildcards.sample}_L30MQ25.k2report classification
+        """
+
+# Generate classified reads
+rule generate_classified_reads:
+    input:
+        centrifuge_result="classification/{sample}_L30MQ25.centrifuge",
+        fq="mapping/{sample}_L30MQ25_dedup.fq"
+    output:
+        fq="final_reads/{sample}_classified_homo_sapiens.fq",
+        lst="final_reads/{sample}_reads.lst"
+    params:
+        taxID=9606  # Homo sapiens
+    benchmark:
+        "benchmarks/generate_classified_reads/{sample}.txt"
+    shell:
+        """
+        python ../scripts/select_reads_from_centrifuge.py {params.taxID} {input.centrifuge_result} {wildcards.sample}
+        mv {wildcards.sample}_reads.lst final_reads/
+        /global/home/users/jieruixu/jieruixu/sediment_dna/seqtk/seqtk subseq {input.fq} {output.lst} > {output.fq}
+        """
+
+# Map again, and run mapDamage
+rule map_after_classification:
+    input:
+        "final_reads/{sample}_classified_homo_sapiens.fq"
+    output:
+        bam="mapping/{sample}_classified_homo_sapiens.bam",
+        bam_bai="mapping/{sample}_classified_homo_sapiens.bam.bai",
+        sai="temp/{sample}_classified_homo_sapiens.sai",
+        sam="temp/{sample}_classified_homo_sapiens.sam"
+    params:
+        ref_genome="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa",
+        threads=16
+    benchmark:
+        "benchmarks/map_after_classification/{sample}.txt"
+    shell:
+        """
+        bwa aln {params.ref_genome} -t {params.threads} {input} > {output.sai}
+        bwa samse {params.ref_genome} {output.sai} {input} > {output.sam}
+        samtools view -h -b {output.sam} | samtools sort -T {wildcards.sample} -o {output.bam}
+        samtools index {output.bam}
+        """
+
+# Run mapDamage after classification
+rule run_mapdamage_after_classification:
+    input:
+        sam_file="mapping/{sample}_classified_homo_sapiens.bam",
+        ref_file="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa"
+    output:
+        directory("mapdamage_result_after_classification/{sample}")
+    benchmark:
+        "benchmarks/run_mapdamage_after_classification/{sample}.txt"
+    shell:
+        """
+        mapDamage --merge-libraries -i {input.sam_file} -r {input.ref_file} -d {output}
+        """
+
+# Rule to filter deaminated reads
+rule filter_deaminated_reads:
+    input:
+        bam_file="mapping/{sample}_classified_homo_sapiens.bam",
+        ref_file="/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa"
+    output:
+        deaminated_bam="final_reads/{sample}_classified_homo_sapiens_deaminated.bam",
+        non_deaminated_bam="final_reads/{sample}_classified_homo_sapiens_non_deaminated.bam",
+        deaminated_bai="final_reads/{sample}_classified_homo_sapiens_deaminated.bam.bai",
+        non_deaminated_bai="final_reads/{sample}_classified_homo_sapiens_non_deaminated.bam.bai"
+    benchmark:
+        "benchmarks/filter_deaminated_reads/{sample}.txt"
+    shell:
+        """
+        python ../scripts/filter_deaminated_reads.py {input.bam_file} {output.deaminated_bam} {output.non_deaminated_bam} {input.ref_file}
+        samtools index {output.deaminated_bam}
+        samtools index {output.non_deaminated_bam}
+        """
+
+# Final report generation
+rule final_report:
+    input:
+        pre_map="data/{sample}.fq.gz",
+        post_map="mapping/{sample}.bam",
+        post_map_qc="mapping/{sample}_L30MQ25.bam",
+        post_map_qc_rmdup="mapping/{sample}_L30MQ25_dedup.bam", 
+        post_map_qc_classi="mapping/{sample}_classified_homo_sapiens.bam", 
+        deaminated_bam="final_reads/{sample}_classified_homo_sapiens_deaminated.bam",  
+    output:
+        "final_report/final_report_{sample}.tsv"
+    params:
+        check_alternate_allele="../scripts/check_alternate_allele.py", 
+        lineage_sites="../lineage_assignment_sites.Mbuti_Denisova_Altai_Chagyrskaya_Vindija.tab", 
+
+    shell:
+        """
+        id={wildcards.sample}
+        
+        # Total reads 
+        total_reads=$(zcat {input.pre_map} | echo $((`wc -l`/4)))
+
+        # Average read length for post-mapping BAM
+        avg_read_length_pre_map=$(samtools view {input.post_map} | cut -f 10 | perl -ne 'chomp;print length($_) . "\n"' | awk '{{ sum += $1; n++ }} END {{ if (n > 0) print sum / n; else print "0" }}')
+
+        # Total reads after Q25 L30 
+        total_reads_post_map_qc=$(samtools view -c {input.post_map_qc})
+        
+        # Unique reads: total reads afamter Q25 L30 and remove dup (unique reads)
+        total_reads_post_map_qc_rmdup=$(samtools view -c {input.post_map_qc_rmdup})
+        
+        # Average duplication rate 
+        dup_rate=$(echo "scale=2; $total_reads_post_map_qc / $total_reads_post_map_qc_rmdup" | bc)
+        
+        # Average read length for unique reads
+        avg_read_length_post_map_qc=$(samtools view {input.post_map_qc_rmdup} | cut -f 10 | perl -ne 'chomp;print length($_) . "\n"' | awk '{{ sum += $1; n++ }} END {{ if (n > 0) print sum / n; else print "0" }}')
+
+        # Classified Homo Sapiens 
+        total_reads_classified=$(samtools view -c {input.post_map_qc_classi})
+        
+        # Deaminated reads
+        total_reads_deaminated=$(samtools view -c {input.deaminated_bam})
+    
+        # Proportion deaminated (among classified homo sapiens)
+        proportion_deaminated=$(echo "scale=2; $total_reads_deaminated / $total_reads_classified" | bc) 
+        
+        # TODO: time can be saved instead of building the dictionary each time 
+        # Proportion hominin derived  
+        proportion_all=$(python {params.check_alternate_allele} -b {input.post_map_qc_classi} -v {params.lineage_sites} -t all)
+        
+        # Proportion hominin derived (deaminated fragments) 
+        proportion_all_deaminated=$(python {params.check_alternate_allele} -b {input.deaminated_bam} -v {params.lineage_sites} -t all)
+        
+        # Proportion Neanderthal branch derived  
+        proportion_neandertal=$(python {params.check_alternate_allele} -b {input.post_map_qc_classi} -v {params.lineage_sites} -t neandertal)
+
+        # Proportion Neanderthal branch derived  (deaminated fragments) 
+        proportion_neandertal_deaminated=$(python {params.check_alternate_allele} -b {input.deaminated_bam} -v {params.lineage_sites} -t neandertal)
+
+        # Proportion Denisova branch derived 
+        proportion_denisova=$(python {params.check_alternate_allele} -b {input.deaminated_bam} -v {params.lineage_sites} -t denisova)
+
+        # Proportion Denisova branch derived (deaminated fragments) 
+        proportion_denisova_deaminated=$(python {params.check_alternate_allele} -b {input.deaminated_bam} -v {params.lineage_sites} -t denisova)
+
+        # Output the final report
+        echo -e "ID\ttotal_reads\taverage_read_length\tQ25L30\tunique_reads\taverage_duplication_rate\taverage_read_length_unique_reads\ttotal_reads_classified\tproportion_deaminated\tproportion_hominin_derived\tproportion_hominin_derived_deaminated\tproportion_neandertal_derived\tproportion_neandertal_derived_deaminated\tproportion_denisova_derived\tproportion_denisova_derived_deaminated" > {output}
+        echo -e "$id\t$total_reads\t$avg_read_length_pre_map\t$total_reads_post_map_qc\t$total_reads_post_map_qc_rmdup\t$dup_rate\t$avg_read_length_post_map_qc\t$total_reads_classified\t$proportion_deaminated\t$proportion_all\t$proportion_all_deaminated\t$proportion_neandertal\t$proportion_neandertal_deaminated\t$proportion_denisova\t$proportion_denisova_deaminated" >> {output}
+        """
+
+# add this line to combine the csv files 
+# Combine all TSV files into one and delete the individual files
+# (head -n 1 final_report/final_report_A15919_humanNucCapture_ssAA197-200_rawReads.tsv && tail -n +2 -q final_report/final_report_*.tsv) > final_report/combined_final_report.tsv && rm final_report/final_report_*.tsv
