@@ -8,55 +8,51 @@ Sedimix is currently under development and will undergo significant improvements
 
 **Key Features:**
 - Utilizes Snakemake, a workflow management system for Python
-- Identifies ancient hominin reads in the samples through mapping and taxonomic classification  
-- Generate report file with summary statistics (number of reads, deamination percentage, lineage site information etc.)
+- Identifies ancient hominin reads in the samples through mapping and taxonomic classification
+- Generates a report file with summary statistics (number of reads, deamination percentage, lineage site information, etc.)
 
 ## Requirements
 Ensure the following tools are installed and configured before running the pipeline:
-- **Centrifuge**: [DaehwanKimLab/centrifuge](https://github.com/DaehwanKimLab/centrifuge)
-- **Kraken2**: [DerrickWood/kraken2](https://github.com/DerrickWood/kraken2)
-- **Seqtk**: [lh3/seqtk](https://github.com/lh3/seqtk)
-- **BWA**: A fast, accurate read mapping software ([Download BWA](https://github.com/lh3/bwa))
-- **Samtools**: Utilities for manipulating alignments in the SAM/BAM format ([Download Samtools](http://www.htslib.org/download/))
 
-**Centrifuge Download** 
+### Centrifuge
 ```bash
 git clone https://github.com/DaehwanKimLab/centrifuge
-cd centrifuge
-make
-sudo make install prefix=/usr/local
+make -C centrifuge
+export PATH=$PATH:$(pwd)/centrifuge
 ```
 
-**Kraken2 Download**
+### Kraken2
 ```bash
 git clone https://github.com/DerrickWood/kraken2.git
-cd kraken2
-./install_kraken2.sh .
+./kraken2/install_kraken2.sh kraken2
+export PATH=$PATH:$(pwd)/kraken2
 ```
 
-**Seqtk Download**
+### Seqtk
 ```bash
-git clone https://github.com/lh3/seqtk.git;
-cd seqtk; make
+git clone https://github.com/lh3/seqtk.git
+make -C seqtk
+export PATH=$PATH:$(pwd)/seqtk
 ```
 
-**BWA Download**
+### BWA
 ```bash
 git clone https://github.com/lh3/bwa.git
-cd bwa; make
+make -C bwa
+export PATH=$PATH:$(pwd)/bwa
 ```
 
-**Samtools Download**
+### Samtools
 ```bash
-wget https://github.com/samtools/samtools/releases/download/1.20/samtools-1.20.tar.bz2 
+wget https://github.com/samtools/samtools/releases/download/1.20/samtools-1.20.tar.bz2
 tar -xvjf samtools-1.20.tar.bz2
 rm samtools-1.20.tar.bz2
-cd samtools-1.20
-make
-make install 
+./samtools-1.20/configure
+make -C samtools-1.20
+export PATH=$PATH:$(pwd)/samtools-1.20
 ```
 
-Add those tools to your PATH environment variable.
+Add these tools to your `PATH` environment variable permanently by adding the `export PATH` commands to your shell profile file (e.g., `.bashrc` or `.zshrc`).
 
 **Index Files**  
 Download index files for Centrifuge and Kraken2 from the following:
@@ -103,9 +99,10 @@ conda activate sedimix
 2. Run the pipeline with the following command:
 
    ```bash
-   snakemake -s ../rules/centrifuge.smk --cores {n_cores} 
+   snakemake -s ../rules/centrifuge.smk --cores {n_cores}
    ```
+
 ## Retrieve Your Results
 - **Classified Reads**: Located in the `final_reads` folder
 - **Data Summary Report**: Located in the `final_report` folder
-- **Example Folde**r: An example folder can be found in `SIM_Set3_centrifuge`. 
+- **Example Folder**: An example folder can be found in `SIM_Set3_centrifuge`.
