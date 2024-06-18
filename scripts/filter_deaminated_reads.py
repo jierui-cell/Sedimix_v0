@@ -1,3 +1,4 @@
+import argparse
 import pysam
 from pyfaidx import Fasta
 
@@ -38,14 +39,29 @@ def filter_reads(input_bam, output_deaminated, output_non_deaminated, reference_
             else:
                 non_deaminated_bam.write(read)
 
+def main():
+    parser = argparse.ArgumentParser(description="Filter BAM reads based on deamination patterns.")
+    parser.add_argument("input_bam", help="Path to the input BAM file")
+    parser.add_argument("output_deaminated", help="Path to the output BAM file for deaminated reads")
+    parser.add_argument("output_non_deaminated", help="Path to the output BAM file for non-deaminated reads")
+    parser.add_argument("reference_path", help="Path to the reference genome FASTA file")
 
-# Usage
-input_bam_path = '../SIM_Set3_centrifuge/mapping/stripped_simulation_s_classified_homo_sapiens.bam'
-ref_genome_path = '/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa'
-deaminated_bam_path = 'test_deaminated.bam'
-non_deaminated_bam_path = 'test_non_deaminated.bam'
+    args = parser.parse_args()
 
-filter_reads(input_bam_path, deaminated_bam_path, non_deaminated_bam_path, ref_genome_path)
+    filter_reads(args.input_bam, args.output_deaminated, args.output_non_deaminated, args.reference_path)
 
-# mapDamage --merge-libraries -l 200 -y 1 -i test_non_deaminated.bam -r ../../reference_data/human/hg19.fa -d non_deaminated
-# mapDamage --merge-libraries -l 200 -y 1 -i test_deaminated.bam -r ../../reference_data/human/hg19.fa -d deaminated
+if __name__ == "__main__":
+    main() 
+
+
+# TODO: DELETE the following lines 
+# # Usage
+# input_bam_path = '../SIM_Set3_centrifuge/mapping/stripped_simulation_s_classified_homo_sapiens.bam'
+# ref_genome_path = '/global/home/users/jieruixu/jieruixu/sediment_dna/sedimix/reference_data/human/hg19.fa'
+# deaminated_bam_path = 'test_deaminated.bam'
+# non_deaminated_bam_path = 'test_non_deaminated.bam'
+
+# filter_reads(input_bam_path, deaminated_bam_path, non_deaminated_bam_path, ref_genome_path)
+
+# # mapDamage --merge-libraries -l 200 -y 1 -i test_non_deaminated.bam -r ../../reference_data/human/hg19.fa -d non_deaminated
+# # mapDamage --merge-libraries -l 200 -y 1 -i test_deaminated.bam -r ../../reference_data/human/hg19.fa -d deaminated
