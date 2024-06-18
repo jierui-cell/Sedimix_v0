@@ -16,6 +16,9 @@ Ensure the following tools are installed and configured before running the pipel
 - **Centrifuge**: [DaehwanKimLab/centrifuge](https://github.com/DaehwanKimLab/centrifuge)
 - **Kraken2**: [DerrickWood/kraken2](https://github.com/DerrickWood/kraken2)
 - **Seqtk**: [lh3/seqtk](https://github.com/lh3/seqtk)
+- **BWA**: A fast, accurate read mapping software ([Download BWA](https://github.com/lh3/bwa))
+- **Samtools**: Utilities for manipulating alignments in the SAM/BAM format ([Download Samtools](http://www.htslib.org/download/))
+- **GSL (GNU Scientific Library)**: [GSL](https://www.gnu.org/software/gsl/)
 
 **Index Files**  
 Download index files for Centrifuge and Kraken2 from the following:
@@ -33,6 +36,12 @@ Create a conda environment with the following command:
 
 ```bash
 conda env create -f environment.yaml
+```
+
+Alternatively, you can use mamba for faster environment creation:
+
+```bash
+mamba env create -f environment.yaml
 ```
 
 Activate the environment with:
